@@ -1,0 +1,8 @@
+fitloop_marketing:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # relative to the dbt_project folder; the agent reads the same file
+      path: ../warehouse/fitloop.duckdb
+      threads: 4

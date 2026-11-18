@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: stg_campaigns
+    description: Campaigns renamed to business names, with channel_group derived from channel.
+    columns:
+      - name: campaign_id
+        tests: [unique, not_null]
+  - name: stg_ad_performance
+    description: Daily ad delivery; cost converted from cents to BRL.
+  - name: stg_conversion_events
+    description: Funnel events renamed; revenue converted from cents to BRL.
+    columns:
+      - name: conversion_id
+        tests: [unique, not_null]

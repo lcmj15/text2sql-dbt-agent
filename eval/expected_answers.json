@@ -1,0 +1,310 @@
+{
+  "q01": {
+    "question": "How many clicks did paid search campaigns get in March 2025?",
+    "columns": [
+      "clicks"
+    ],
+    "rows": [
+      [
+        1561.0
+      ]
+    ]
+  },
+  "q02": {
+    "question": "How many impressions did display campaigns deliver in November 2025?",
+    "columns": [
+      "impressions"
+    ],
+    "rows": [
+      [
+        1149925.0
+      ]
+    ]
+  },
+  "q03": {
+    "question": "How many conversions did we have in Q3 2025?",
+    "columns": [
+      "conversions"
+    ],
+    "rows": [
+      [
+        515.0
+      ]
+    ]
+  },
+  "q04": {
+    "question": "How many leads did we generate in 2025?",
+    "columns": [
+      "leads"
+    ],
+    "rows": [
+      [
+        7828.0
+      ]
+    ]
+  },
+  "q05": {
+    "question": "What was our total paid media spend in 2025?",
+    "columns": [
+      "spend_brl"
+    ],
+    "rows": [
+      [
+        492536.61999999953
+      ]
+    ]
+  },
+  "q06": {
+    "question": "Show the number of conversions per month in 2025.",
+    "columns": [
+      "month",
+      "conversions"
+    ],
+    "rows": [
+      [
+        "2025-01-01",
+        87.0
+      ],
+      [
+        "2025-02-01",
+        174.0
+      ],
+      [
+        "2025-03-01",
+        90.0
+      ],
+      [
+        "2025-04-01",
+        77.0
+      ],
+      [
+        "2025-05-01",
+        174.0
+      ],
+      [
+        "2025-06-01",
+        90.0
+      ],
+      [
+        "2025-07-01",
+        109.0
+      ],
+      [
+        "2025-08-01",
+        233.0
+      ],
+      [
+        "2025-09-01",
+        173.0
+      ],
+      [
+        "2025-10-01",
+        110.0
+      ],
+      [
+        "2025-11-01",
+        177.0
+      ],
+      [
+        "2025-12-01",
+        99.0
+      ]
+    ]
+  },
+  "q07": {
+    "question": "What was the CAC of each paid media channel in H1 2025?",
+    "columns": [
+      "channel",
+      "cac_brl"
+    ],
+    "rows": [
+      [
+        "display",
+        1571.2518181818193
+      ],
+      [
+        "paid_search",
+        551.5101260504205
+      ],
+      [
+        "paid_social",
+        925.8065517241386
+      ]
+    ]
+  },
+  "q08": {
+    "question": "What was the ROAS of paid social campaigns in Brazil in 2025?",
+    "columns": [
+      "roas"
+    ],
+    "rows": [
+      [
+        0.1836713503144006
+      ]
+    ]
+  },
+  "q09": {
+    "question": "What was the CTR of each channel in 2025? Order from highest to lowest.",
+    "columns": [
+      "channel",
+      "ctr"
+    ],
+    "rows": [
+      [
+        "paid_search",
+        0.04501290850508244
+      ],
+      [
+        "affiliate",
+        0.029922263694617944
+      ],
+      [
+        "email",
+        0.024925501964604583
+      ],
+      [
+        "push",
+        0.014791282777430345
+      ],
+      [
+        "paid_social",
+        0.011926353555327153
+      ],
+      [
+        "display",
+        0.003986514993760489
+      ]
+    ]
+  },
+  "q10": {
+    "question": "Which campaign generated the most leads in 2025?",
+    "columns": [
+      "campaign_name"
+    ],
+    "rows": [
+      [
+        "br_paid_search_brand_q3_2025"
+      ]
+    ]
+  },
+  "q11": {
+    "question": "What was the trial-to-paid rate for campaigns in Mexico in 2025?",
+    "columns": [
+      "trial_to_paid_rate"
+    ],
+    "rows": [
+      [
+        0.3957307060755337
+      ]
+    ]
+  },
+  "q12": {
+    "question": "How many campaigns were active on 2025-08-15?",
+    "columns": [
+      "active_campaigns"
+    ],
+    "rows": [
+      [
+        13.0
+      ]
+    ]
+  },
+  "q13": {
+    "question": "What was our total revenue in 2025?",
+    "columns": [
+      "revenue_brl"
+    ],
+    "rows": [
+      [
+        222520.69999999393
+      ]
+    ]
+  },
+  "q14": {
+    "question": "Which country had the lowest paid media CAC in 2025?",
+    "columns": [
+      "country_code"
+    ],
+    "rows": [
+      [
+        "cl"
+      ]
+    ]
+  },
+  "q15": {
+    "question": "What was the average CPC of paid search in 2025?",
+    "columns": [
+      "cpc_brl"
+    ],
+    "rows": [
+      [
+        2.0910363647555297
+      ]
+    ]
+  },
+  "q16": {
+    "question": "What share of our 2025 conversions came from organic?",
+    "columns": [
+      "organic_share"
+    ],
+    "rows": [
+      [
+        0.29315756434400503
+      ]
+    ]
+  },
+  "q17": {
+    "question": "Which 3 paid media campaigns had the highest ROAS in 2025?",
+    "columns": [
+      "campaign_name",
+      "roas"
+    ],
+    "rows": [
+      [
+        "mx_paid_search_acquisition_q1_2025",
+        0.2964895204614198
+      ],
+      [
+        "cl_paid_search_acquisition_q3_2025",
+        0.27507607607949497
+      ],
+      [
+        "br_paid_search_acquisition_q1_2025",
+        0.2608092647915096
+      ]
+    ]
+  },
+  "q18": {
+    "question": "What was the conversion rate (CVR) of the email channel in 2025?",
+    "columns": [
+      "cvr"
+    ],
+    "rows": [
+      [
+        0.0027002469894165677
+      ]
+    ]
+  },
+  "q19": {
+    "question": "How much did we spend on internal QA campaigns in 2025?",
+    "columns": [
+      "spend_brl"
+    ],
+    "rows": [
+      [
+        6507.509999999996
+      ]
+    ]
+  },
+  "q20": {
+    "question": "How many users started a trial in Q4 2025?",
+    "columns": [
+      "trial_users"
+    ],
+    "rows": [
+      [
+        1020.0
+      ]
+    ]
+  }
+}

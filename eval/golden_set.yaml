@@ -1,0 +1,271 @@
+# Golden set: business questions with a reference ("golden") SQL query.
+#
+# The expected answer is whatever the golden SQL returns on the warehouse; it is
+# materialized in eval/expected_answers.json by `python -m eval.build_expected`.
+# Grading is *execution accuracy*: the agent's SQL is run and its result is compared
+# with the golden result (tolerant to column names, column order, extra columns and
+# small float differences; row order only matters when order_matters: true).
+#
+# Tags say which kind of knowledge a question needs, so accuracy can be broken down:
+#   simple         – answerable from column names alone (control group)
+#   glossary       – needs a business term definition (conversion, lead, paid media…)
+#   business_rule  – needs an unwritten rule (exclude QA campaigns, keep organic…)
+#   metric         – needs a metric formula (CAC, ROAS, CTR, CVR…)
+
+questions:
+  - id: q01
+    question: How many clicks did paid search campaigns get in March 2025?
+    tags: [simple]
+    golden_sql: |
+      select sum(f.clicks) as clicks
+      from gold.fct_ad_performance_daily f
+      join gold.dim_campaigns c using (campaign_id)
+      where c.channel = 'paid_search' and not c.is_internal
+        and f.date_day between '2025-03-01' and '2025-03-31'
+
+  - id: q02
+    question: How many impressions did display campaigns deliver in November 2025?
+    tags: [simple]
+    golden_sql: |
+      select sum(f.impressions) as impressions
+      from gold.fct_ad_performance_daily f
+      join gold.dim_campaigns c using (campaign_id)
+      where c.channel = 'display' and not c.is_internal
+        and f.date_day between '2025-11-01' and '2025-11-30'
+
+  - id: q03
+    question: How many conversions did we have in Q3 2025?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select count(*) as conversions
+      from gold.fct_conversions f
+      left join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'paid_subscription'
+        and coalesce(c.is_internal, false) = false
+        and f.conversion_date between '2025-07-01' and '2025-09-30'
+
+  - id: q04
+    question: How many leads did we generate in 2025?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select count(*) as leads
+      from gold.fct_conversions f
+      left join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'signup'
+        and coalesce(c.is_internal, false) = false
+
+  - id: q05
+    question: What was our total paid media spend in 2025?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select sum(f.spend_brl) as spend_brl
+      from gold.fct_ad_performance_daily f
+      join gold.dim_campaigns c using (campaign_id)
+      where c.channel_group = 'paid_media' and not c.is_internal
+
+  - id: q06
+    question: Show the number of conversions per month in 2025.
+    tags: [glossary, business_rule]
+    order_matters: true
+    golden_sql: |
+      select f.conversion_month as month, count(*) as conversions
+      from gold.fct_conversions f
+      left join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'paid_subscription'
+        and coalesce(c.is_internal, false) = false
+      group by 1
+      order by 1
+
+  - id: q07
+    question: What was the CAC of each paid media channel in H1 2025?
+    tags: [metric, glossary, business_rule]
+    golden_sql: |
+      with spend as (
+        select c.channel, sum(f.spend_brl) as spend
+        from gold.fct_ad_performance_daily f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel_group = 'paid_media' and not c.is_internal
+          and f.date_day between '2025-01-01' and '2025-06-30'
+        group by 1
+      ), conv as (
+        select c.channel, count(*) as conversions
+        from gold.fct_conversions f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel_group = 'paid_media' and not c.is_internal
+          and f.conversion_type = 'paid_subscription'
+          and f.conversion_date between '2025-01-01' and '2025-06-30'
+        group by 1
+      )
+      select s.channel, s.spend / c.conversions as cac_brl
+      from spend s join conv c using (channel)
+
+  - id: q08
+    question: What was the ROAS of paid social campaigns in Brazil in 2025?
+    tags: [metric, business_rule]
+    golden_sql: |
+      with spend as (
+        select sum(f.spend_brl) as spend
+        from gold.fct_ad_performance_daily f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel = 'paid_social' and c.country_code = 'BR' and not c.is_internal
+      ), rev as (
+        select sum(f.revenue_brl) as revenue
+        from gold.fct_conversions f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel = 'paid_social' and c.country_code = 'BR' and not c.is_internal
+          and f.conversion_type = 'paid_subscription'
+      )
+      select rev.revenue / spend.spend as roas from spend, rev
+
+  - id: q09
+    question: What was the CTR of each channel in 2025? Order from highest to lowest.
+    tags: [metric, business_rule]
+    order_matters: true
+    golden_sql: |
+      select c.channel, sum(f.clicks) * 1.0 / sum(f.impressions) as ctr
+      from gold.fct_ad_performance_daily f
+      join gold.dim_campaigns c using (campaign_id)
+      where not c.is_internal
+      group by 1
+      order by 2 desc
+
+  - id: q10
+    question: Which campaign generated the most leads in 2025?
+    tags: [glossary]
+    golden_sql: |
+      select c.campaign_name
+      from gold.fct_conversions f
+      join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'signup' and not c.is_internal
+      group by c.campaign_name
+      order by count(*) desc
+      limit 1
+
+  - id: q11
+    question: What was the trial-to-paid rate for campaigns in Mexico in 2025?
+    tags: [metric, glossary]
+    golden_sql: |
+      select sum(case when f.conversion_type = 'paid_subscription' then 1 else 0 end) * 1.0
+           / sum(case when f.conversion_type = 'trial_start' then 1 else 0 end) as trial_to_paid_rate
+      from gold.fct_conversions f
+      join gold.dim_campaigns c using (campaign_id)
+      where c.country_code = 'MX' and not c.is_internal
+
+  - id: q12
+    question: How many campaigns were active on 2025-08-15?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select count(*) as active_campaigns
+      from gold.dim_campaigns
+      where start_date <= '2025-08-15' and end_date >= '2025-08-15' and not is_internal
+
+  - id: q13
+    question: What was our total revenue in 2025?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select sum(f.revenue_brl) as revenue_brl
+      from gold.fct_conversions f
+      left join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'paid_subscription'
+        and coalesce(c.is_internal, false) = false
+
+  - id: q14
+    question: Which country had the lowest paid media CAC in 2025?
+    tags: [metric, glossary, business_rule]
+    golden_sql: |
+      with spend as (
+        select c.country_code, sum(f.spend_brl) as spend
+        from gold.fct_ad_performance_daily f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel_group = 'paid_media' and not c.is_internal
+        group by 1
+      ), conv as (
+        select c.country_code, count(*) as conversions
+        from gold.fct_conversions f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel_group = 'paid_media' and not c.is_internal
+          and f.conversion_type = 'paid_subscription'
+        group by 1
+      )
+      select s.country_code
+      from spend s join conv c using (country_code)
+      order by s.spend / c.conversions asc
+      limit 1
+
+  - id: q15
+    question: What was the average CPC of paid search in 2025?
+    tags: [metric, business_rule]
+    golden_sql: |
+      select sum(f.spend_brl) / sum(f.clicks) as cpc_brl
+      from gold.fct_ad_performance_daily f
+      join gold.dim_campaigns c using (campaign_id)
+      where c.channel = 'paid_search' and not c.is_internal
+
+  - id: q16
+    question: What share of our 2025 conversions came from organic?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select sum(case when f.campaign_id is null then 1 else 0 end) * 1.0 / count(*) as organic_share
+      from gold.fct_conversions f
+      left join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'paid_subscription'
+        and coalesce(c.is_internal, false) = false
+
+  - id: q17
+    question: Which 3 paid media campaigns had the highest ROAS in 2025?
+    tags: [metric, glossary, business_rule]
+    order_matters: true
+    golden_sql: |
+      with spend as (
+        select campaign_id, sum(spend_brl) as spend
+        from gold.fct_ad_performance_daily group by 1
+      ), rev as (
+        select campaign_id, sum(revenue_brl) as revenue
+        from gold.fct_conversions
+        where conversion_type = 'paid_subscription' group by 1
+      )
+      select c.campaign_name, r.revenue / s.spend as roas
+      from gold.dim_campaigns c
+      join spend s using (campaign_id)
+      join rev r using (campaign_id)
+      where c.channel_group = 'paid_media' and not c.is_internal
+      order by roas desc
+      limit 3
+
+  - id: q18
+    question: What was the conversion rate (CVR) of the email channel in 2025?
+    tags: [metric, glossary]
+    golden_sql: |
+      with clicks as (
+        select sum(f.clicks) as clicks
+        from gold.fct_ad_performance_daily f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel = 'email' and not c.is_internal
+      ), conv as (
+        select count(*) as conversions
+        from gold.fct_conversions f
+        join gold.dim_campaigns c using (campaign_id)
+        where c.channel = 'email' and not c.is_internal
+          and f.conversion_type = 'paid_subscription'
+      )
+      select conv.conversions * 1.0 / clicks.clicks as cvr from conv, clicks
+
+  - id: q19
+    question: How much did we spend on internal QA campaigns in 2025?
+    tags: [glossary]
+    golden_sql: |
+      select sum(f.spend_brl) as spend_brl
+      from gold.fct_ad_performance_daily f
+      join gold.dim_campaigns c using (campaign_id)
+      where c.is_internal
+
+  - id: q20
+    question: How many users started a trial in Q4 2025?
+    tags: [glossary, business_rule]
+    golden_sql: |
+      select count(distinct f.user_id) as trial_users
+      from gold.fct_conversions f
+      left join gold.dim_campaigns c using (campaign_id)
+      where f.conversion_type = 'trial_start'
+        and coalesce(c.is_internal, false) = false
+        and f.conversion_date between '2025-10-01' and '2025-12-31'

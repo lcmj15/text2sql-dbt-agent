@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  - name: dim_campaigns
+    description: >
+      One row per marketing campaign (2025). Use it to slice media and conversion
+      facts by channel, channel group, country and objective. Contains internal
+      QA campaigns flagged by is_internal that must be excluded from business metrics.
+      See the business_rules doc.
+    meta:
+      grain: campaign_id
+      owner: marketing-analytics
+    columns:
+      - name: campaign_id
+        description: Primary key of the campaign.
+        tests: [unique, not_null]
+      - name: campaign_name
+        description: Human-readable name, pattern <country>_<channel>_<objective>_<quarter>_<year>.
+      - name: channel
+        description: Marketing channel. One of paid_search, paid_social, display, affiliate, email, push.
+        tests:
+          - accepted_values:
+              arguments:
+                values: [paid_search, paid_social, display, affiliate, email, push]
+      - name: channel_group
+        description: >
+          Channel grouping used by leadership. paid_media = paid_search + paid_social + display;
+          owned_media = email + push; partnerships = affiliate.
+        tests:
+          - accepted_values:
+              arguments:
+                values: [paid_media, owned_media, partnerships]
+      - name: country_code
+        description: ISO-2 market where the campaign runs (BR, MX, CL).
+      - name: objective
+        description: Campaign objective (acquisition, reactivation, brand).
+      - name: start_date
+        description: First day of the campaign flight (inclusive).
+      - name: end_date
+        description: Last day of the campaign flight (inclusive).
+      - name: is_internal
+        description: >
+          TRUE for QA / tracking-test campaigns created by the growth team. Their
+          traffic and conversions are fake. ALWAYS exclude them from business metrics.
+        tests: [not_null]
+      - name: budget_brl
+        description: Lifetime budget of the campaign in BRL. 0 for owned media (no media cost).
+
+  - name: fct_ad_performance_daily
+    description: >
+      Daily media delivery and cost. Grain: one row per campaign_id per date_day.
+      Source of impressions, clicks and spend (all metrics in metric_definitions that
+      use spend). Join to dim_campaigns on campaign_id to filter channel, country
+      and to exclude internal campaigns.
+    meta:
+      grain: campaign_id x date_day
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [campaign_id, date_day]
+    columns:
+      - name: date_day
+        description: Reporting date of the delivery.
+        tests: [not_null]
+      - name: date_month
+        description: First day of the month of date_day. Use for monthly aggregation.
+      - name: campaign_id
+        description: Foreign key to dim_campaigns.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_campaigns')
+                field: campaign_id
+      - name: impressions
+        description: Ad impressions (for email and push = messages delivered).
+      - name: clicks
+        description: Clicks on the ad / message.
+      - name: spend_brl
+        description: Media cost in BRL. Zero for owned media (email, push).
+
+  - name: fct_conversions
+    description: >
+      Funnel events, one row per event: signup -> trial_start -> paid_subscription.
+      In this business a "conversion" means a paid_subscription (see business_glossary).
+      Events are last-click attributed to a campaign; campaign_id is NULL for organic.
+      Company-level totals must include organic rows and exclude internal campaigns
+      (left join to dim_campaigns).
+    meta:
+      grain: conversion_id
+      attribution: last-click, 7-day window, computed upstream
+    columns:
+      - name: conversion_id
+        description: Primary key of the event.
+        tests: [unique, not_null]
+      - name: user_id
+        description: Pseudonymous user id. One user can have up to one event of each type.
+      - name: campaign_id
+        description: Attributed campaign (FK to dim_campaigns). NULL = organic.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_campaigns')
+                field: campaign_id
+      - name: conversion_type
+        description: >
+          Funnel stage: signup (= lead), trial_start, paid_subscription (= conversion).
+        tests:
+          - accepted_values:
+              arguments:
+                values: [signup, trial_start, paid_subscription]
+      - name: converted_at
+        description: Timestamp of the event (America/Sao_Paulo).
+      - name: conversion_date
+        description: Date of the event. Use this to filter conversions by period.
+      - name: conversion_month
+        description: First day of the month of the event. Use for monthly aggregation.
+      - name: revenue_brl
+        description: >
+          First-month subscription value in BRL. Non-zero only for paid_subscription.

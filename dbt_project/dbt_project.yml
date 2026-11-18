@@ -1,0 +1,43 @@
+name: fitloop_marketing
+version: "1.0.0"
+config-version: 2
+profile: fitloop_marketing
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+seeds:
+  fitloop_marketing:
+    +schema: raw
+    raw_campaigns:
+      +column_types:
+        id: integer
+        start_date: date
+        end_date: date
+        internal_flag: boolean
+        lifetime_budget: double
+    raw_ad_performance:
+      +column_types:
+        report_date: date
+        campaign_id: integer
+        impressions: bigint
+        clicks: bigint
+        cost_cents: bigint
+    raw_conversion_events:
+      +column_types:
+        campaign_id: integer
+        event_ts: timestamp
+        revenue_cents: bigint
+
+models:
+  fitloop_marketing:
+    silver:
+      +schema: silver
+      +materialized: view
+    gold:
+      +schema: gold
+      +materialized: table
